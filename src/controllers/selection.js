@@ -6,6 +6,11 @@ import editor from "../global/editor";
 import tooltip from "../global/tooltip";
 import formula from "../global/formula";
 import { getBorderInfoCompute } from "../global/border";
+import {
+    pushCellBorderInfo,
+    pushEmptyCellBorderInfo,
+    removeCellBorderInfoInRange,
+} from "../global/borderInfoHelper";
 import { getdatabyselection, getcellvalue, datagridgrowth } from "../global/getdata";
 import { rowlenByRange } from "../global/getRowlen";
 import { isEditMode, hasPartMC, isRealNum } from "../global/validate";
@@ -16,6 +21,7 @@ import { replaceHtml, getObjType, luckysheetfontformat } from "../utils/util";
 import Store from "../store";
 import locale from "../locale/locale";
 import imageCtrl from "./imageCtrl";
+import { setDataVerificationFromSource } from "./dataVerificationHelper";
 
 const selection = {
     clearcopy: function(e) {
@@ -287,7 +293,7 @@ const selection = {
                                             borderInfoCompute[bd_r + "_" + bd_c] &&
                                             borderInfoCompute[bd_r + "_" + bd_c].l
                                         ) {
-                                            let linetype = borderInfoCompute[r + "_" + c].l.style;
+                                            let linetype = borderInfoCompute[bd_r + "_" + bd_c].l.style;
                                             let bcolor = borderInfoCompute[bd_r + "_" + bd_c].l.color;
 
                                             if (bl_obj["style"][linetype] == null) {
@@ -680,7 +686,7 @@ const selection = {
                 cfg["merge"] = {};
             }
 
-            if (JSON.stringify(borderInfo).length > 2 && cfg["borderInfo"] == null) {
+            if (borderInfo != null && JSON.stringify(borderInfo).length > 2 && cfg["borderInfo"] == null) {
                 cfg["borderInfo"] = [];
             }
 
@@ -725,6 +731,8 @@ const selection = {
             if (cfg["rowlen"] == null) {
                 cfg["rowlen"] = {};
             }
+
+            removeCellBorderInfoInRange(cfg, [minh, maxh], [minc, maxc]);
 
             let RowlChange = false;
             let offsetMC = {};
@@ -771,19 +779,7 @@ const selection = {
                     }
 
                     if (borderInfo[h - minh + "_" + (c - minc)]) {
-                        let bd_obj = {
-                            rangeType: "cell",
-                            value: {
-                                row_index: h,
-                                col_index: c,
-                                l: borderInfo[h - minh + "_" + (c - minc)].l,
-                                r: borderInfo[h - minh + "_" + (c - minc)].r,
-                                t: borderInfo[h - minh + "_" + (c - minc)].t,
-                                b: borderInfo[h - minh + "_" + (c - minc)].b,
-                            },
-                        };
-
-                        cfg["borderInfo"].push(bd_obj);
+                        pushCellBorderInfo(cfg, h, c, borderInfo[h - minh + "_" + (c - minc)]);
                     }
 
                     let fontset = luckysheetfontformat(x[c]);
@@ -1054,53 +1050,25 @@ const selection = {
             }
         }
 
+        removeCellBorderInfoInRange(cfg, [minh, maxh], [minc, maxc]);
+
         let offsetMC = {};
         for (let h = minh; h <= maxh; h++) {
             let x = [].concat(d[h]);
 
             for (let c = minc; c <= maxc; c++) {
                 if (borderInfoCompute[c_r1 + h - minh + "_" + (c_c1 + c - minc)]) {
-                    let bd_obj = {
-                        rangeType: "cell",
-                        value: {
-                            row_index: h,
-                            col_index: c,
-                            l: borderInfoCompute[c_r1 + h - minh + "_" + (c_c1 + c - minc)].l,
-                            r: borderInfoCompute[c_r1 + h - minh + "_" + (c_c1 + c - minc)].r,
-                            t: borderInfoCompute[c_r1 + h - minh + "_" + (c_c1 + c - minc)].t,
-                            b: borderInfoCompute[c_r1 + h - minh + "_" + (c_c1 + c - minc)].b,
-                        },
-                    };
-
-                    if (cfg["borderInfo"] == null) {
-                        cfg["borderInfo"] = [];
-                    }
-
-                    cfg["borderInfo"].push(bd_obj);
+                    pushCellBorderInfo(cfg, h, c, borderInfoCompute[c_r1 + h - minh + "_" + (c_c1 + c - minc)]);
                 } else if (borderInfoCompute[h + "_" + c]) {
-                    let bd_obj = {
-                        rangeType: "cell",
-                        value: {
-                            row_index: h,
-                            col_index: c,
-                            l: null,
-                            r: null,
-                            t: null,
-                            b: null,
-                        },
-                    };
-
-                    if (cfg["borderInfo"] == null) {
-                        cfg["borderInfo"] = [];
-                    }
-
-                    cfg["borderInfo"].push(bd_obj);
+                    pushEmptyCellBorderInfo(cfg, h, c);
                 }
 
                 //数据验证 剪切
-                if (c_dataVerification[c_r1 + h - minh + "_" + (c_c1 + c - minc)]) {
-                    dataVerification[h + "_" + c] = c_dataVerification[c_r1 + h - minh + "_" + (c_c1 + c - minc)];
-                }
+                setDataVerificationFromSource(
+                    dataVerification,
+                    h + "_" + c,
+                    c_dataVerification[c_r1 + h - minh + "_" + (c_c1 + c - minc)],
+                );
 
                 if (getObjType(x[c]) == "object" && "mc" in x[c]) {
                     if ("rs" in x[c].mc) {
@@ -1523,7 +1491,12 @@ const selection = {
             {},
             Store.luckysheetfile[getSheetIndex(copySheetIndex)].dataVerification,
         );
-        let dataVerification = null;
+        let dataVerification = $.extend(
+            true,
+            {},
+            Store.luckysheetfile[getSheetIndex(Store.currentSheetIndex)].dataVerification,
+        );
+        removeCellBorderInfoInRange(cfg, [minh, maxh], [minc, maxc]);
 
         let mth = 0,
             mtc = 0,
@@ -1546,55 +1519,17 @@ const selection = {
 
                     for (let c = mtc; c < maxcellCahe; c++) {
                         if (borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)]) {
-                            let bd_obj = {
-                                rangeType: "cell",
-                                value: {
-                                    row_index: h,
-                                    col_index: c,
-                                    l: borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)].l,
-                                    r: borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)].r,
-                                    t: borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)].t,
-                                    b: borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)].b,
-                                },
-                            };
-
-                            if (cfg["borderInfo"] == null) {
-                                cfg["borderInfo"] = [];
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushCellBorderInfo(cfg, h, c, borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)]);
                         } else if (borderInfoCompute[h + "_" + c]) {
-                            let bd_obj = {
-                                rangeType: "cell",
-                                value: {
-                                    row_index: h,
-                                    col_index: c,
-                                    l: null,
-                                    r: null,
-                                    t: null,
-                                    b: null,
-                                },
-                            };
-
-                            if (cfg["borderInfo"] == null) {
-                                cfg["borderInfo"] = [];
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushEmptyCellBorderInfo(cfg, h, c);
                         }
 
                         //数据验证 复制
-                        if (c_dataVerification[c_r1 + h - mth + "_" + (c_c1 + c - mtc)]) {
-                            if (dataVerification == null) {
-                                dataVerification = $.extend(
-                                    true,
-                                    {},
-                                    Store.luckysheetfile[getSheetIndex(Store.currentSheetIndex)].dataVerification,
-                                );
-                            }
-
-                            dataVerification[h + "_" + c] = c_dataVerification[c_r1 + h - mth + "_" + (c_c1 + c - mtc)];
-                        }
+                        setDataVerificationFromSource(
+                            dataVerification,
+                            h + "_" + c,
+                            c_dataVerification[c_r1 + h - mth + "_" + (c_c1 + c - mtc)],
+                        );
 
                         if (getObjType(x[c]) == "object" && "mc" in x[c]) {
                             if ("rs" in x[c].mc) {
@@ -1814,7 +1749,12 @@ const selection = {
             {},
             Store.luckysheetfile[getSheetIndex(copySheetIndex)].dataVerification,
         );
-        let dataVerification = null;
+        let dataVerification = $.extend(
+            true,
+            {},
+            Store.luckysheetfile[getSheetIndex(Store.currentSheetIndex)].dataVerification,
+        );
+        removeCellBorderInfoInRange(cfg, [minh, maxh], [minc, maxc]);
 
         let mth = 0,
             mtc = 0,
@@ -1841,55 +1781,17 @@ const selection = {
 
                     for (let c = mtc; c < maxcellCahe; c++) {
                         if (borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)]) {
-                            let bd_obj = {
-                                rangeType: "cell",
-                                value: {
-                                    row_index: h,
-                                    col_index: c,
-                                    l: borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)].l,
-                                    r: borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)].r,
-                                    t: borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)].t,
-                                    b: borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)].b,
-                                },
-                            };
-
-                            if (cfg["borderInfo"] == null) {
-                                cfg["borderInfo"] = [];
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushCellBorderInfo(cfg, h, c, borderInfoCompute[c_r1 + h - mth + "_" + (c_c1 + c - mtc)]);
                         } else if (borderInfoCompute[h + "_" + c]) {
-                            let bd_obj = {
-                                rangeType: "cell",
-                                value: {
-                                    row_index: h,
-                                    col_index: c,
-                                    l: null,
-                                    r: null,
-                                    t: null,
-                                    b: null,
-                                },
-                            };
-
-                            if (cfg["borderInfo"] == null) {
-                                cfg["borderInfo"] = [];
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushEmptyCellBorderInfo(cfg, h, c);
                         }
 
                         //数据验证 复制
-                        if (c_dataVerification[c_r1 + h - mth + "_" + (c_c1 + c - mtc)]) {
-                            if (dataVerification == null) {
-                                dataVerification = $.extend(
-                                    true,
-                                    {},
-                                    Store.luckysheetfile[getSheetIndex(Store.currentSheetIndex)].dataVerification,
-                                );
-                            }
-
-                            dataVerification[h + "_" + c] = c_dataVerification[c_r1 + h - mth + "_" + (c_c1 + c - mtc)];
-                        }
+                        setDataVerificationFromSource(
+                            dataVerification,
+                            h + "_" + c,
+                            c_dataVerification[c_r1 + h - mth + "_" + (c_c1 + c - mtc)],
+                        );
 
                         if (getObjType(x[c]) == "object" && "mc" in x[c]) {
                             if ("rs" in x[c].mc) {

@@ -15,6 +15,13 @@ import sheetmanage from './sheetmanage';
 import { getSheetIndex, getRangetxt } from '../methods/get';
 import locale from '../locale/locale';
 import Store from '../store';
+import {
+    normalizeDataVerificationModel,
+    normalizeDropdownValue,
+    parseDropdownListText,
+    validateCheckboxCellValue,
+    validateDropdownCellValue,
+} from './dataVerificationHelper';
 
 const dataVerificationCtrl = {
     defaultItem: {
@@ -266,14 +273,25 @@ const dataVerificationCtrl = {
             if ($item.hasClass('multi')) {
                 $item.toggleClass('checked');
                 value = $.map($("#luckysheet-dataVerification-dropdown-List").children().filter('.checked'), function(el) {
-                    return el.innerText;
+                    return normalizeDropdownValue(el.innerText);
                 }).join(',');
             } else {
                 $("#luckysheet-dataVerification-dropdown-List").hide();
             }
-            let last = Store.luckysheet_select_save[Store.luckysheet_select_save.length - 1];
-            let rowIndex = last.row_focus;
-            let colIndex = last.column_focus;
+            let dataIndex = $("#luckysheet-dataVerification-dropdown-List").prop("data-index");
+            let rowIndex, colIndex;
+
+            if(dataIndex != null && dataIndex.toString().indexOf("_") > -1){
+                let index = dataIndex.toString().split("_");
+                rowIndex = Number(index[0]);
+                colIndex = Number(index[1]);
+            }
+
+            if(!isRealNum(rowIndex) || !isRealNum(colIndex)){
+                let last = Store.luckysheet_select_save[Store.luckysheet_select_save.length - 1];
+                rowIndex = last.row_focus;
+                colIndex = last.column_focus;
+            }
 
             $("#luckysheet-rich-text-editor").text(value);
             formula.updatecell(rowIndex, colIndex);
@@ -296,7 +314,7 @@ const dataVerificationCtrl = {
 
             formula.rangetosheet = Store.currentSheetIndex;
 
-            if(range[0].sheetIndex != Store.currentSheetIndex){
+            if(range.length > 0 && range[0].sheetIndex != Store.currentSheetIndex){
                 sheetmanage.changeSheetExec(range[0].sheetIndex);
             }
 
@@ -343,7 +361,7 @@ const dataVerificationCtrl = {
 
             formula.rangetosheet = Store.currentSheetIndex;
 
-            if(range[0].sheetIndex != Store.currentSheetIndex){
+            if(range.length > 0 && range[0].sheetIndex != Store.currentSheetIndex){
                 sheetmanage.changeSheetExec(range[0].sheetIndex);
             }
 
@@ -1307,26 +1325,10 @@ const dataVerificationCtrl = {
         if(type == 'dropdown'){
             let list = _this.getDropdownList(value1);
 
-            // 多选的情况 检查每个都在下拉列表中
-            if(type2 && cellValue){
-                return cellValue.split(',').every(function (i) {
-                    return list.indexOf(i) !== -1;
-                });
-            }
-
-            let result = false;
-
-            for(let i = 0; i < list.length; i++){
-                if(list[i] == cellValue){
-                    result = true;
-                    break;
-                }
-            }
-
-            return result;
+            return validateDropdownCellValue(cellValue, item, list);
         }
         else if(type == 'checkbox'){
-
+            return validateCheckboxCellValue(cellValue, item);
         }
         else if(type == 'number' || type == 'number_integer' || type == 'number_decimal'){
             if(!isRealNum(cellValue)){
@@ -1511,9 +1513,9 @@ const dataVerificationCtrl = {
         if (item.type === 'dropdown' && item.type2) {
             // 下拉多选的情况下 将已经选择的标出来
             let cellValue = getcellvalue(rowIndex, colIndex, null);
-            let valueArr = isRealNull(cellValue) ? [] : cellValue.split(',');
+            let valueArr = isRealNull(cellValue) ? [] : parseDropdownListText(cellValue);
             list.forEach(i => {
-                let checked = valueArr.indexOf(i) !== -1;
+                let checked = valueArr.indexOf(normalizeDropdownValue(i)) !== -1;
                 optionHtml += `<div class="dropdown-List-item  luckysheet-mousedown-cancel multi${checked ? ' checked': ''}">${i}</div>`;
             });
         } else {
@@ -1546,7 +1548,14 @@ const dataVerificationCtrl = {
 
         if(formula.iscelldata(txt)){
             let range = formula.getcellrange(txt);
+            if(range == null){
+                return list;
+            }
+
             let d = Store.luckysheetfile[getSheetIndex(range.sheetIndex)].data;
+            if(d == null){
+                return list;
+            }
 
             for(let r = range.row[0]; r <= range.row[1]; r++){
                 for(let c = range.column[0]; c <= range.column[1]; c++){
@@ -1560,28 +1569,16 @@ const dataVerificationCtrl = {
                         continue;
                     }
 
-                    let v = cell.m || cell.v;
+                    let v = normalizeDropdownValue(cell.m || cell.v);
 
-                    if(!list.includes(v)){
+                    if(v.length > 0 && !list.includes(v)){
                         list.push(v);
                     }
                 }
             }
         }
         else{
-            let arr = txt.split(",");
-
-            for(let i = 0; i < arr.length; i++){
-                let v = arr[i];
-
-                if(v.length == 0){
-                    continue;
-                }
-
-                if(!list.includes(v)){
-                    list.push(v);
-                }
-            }
+            list = parseDropdownListText(txt);
         }
 
         return list;
@@ -1613,6 +1610,7 @@ const dataVerificationCtrl = {
     },
     ref: function(historyDataVerification, currentDataVerification, sheetIndex){
         let _this = this;
+        currentDataVerification = normalizeDataVerificationModel(currentDataVerification);
 
         if (Store.clearjfundo) {
             Store.jfundo.length  = 0;
@@ -1639,6 +1637,7 @@ const dataVerificationCtrl = {
     },
     refOfCheckbox: function(historyDataVerification, currentDataVerification, sheetIndex, d, range){
         let _this = this;
+        currentDataVerification = normalizeDataVerificationModel(currentDataVerification);
 
         if (Store.clearjfundo) {
             Store.jfundo.length  = 0;

@@ -21,6 +21,7 @@ import tooltip from "../global/tooltip";
 import editor from "../global/editor";
 import { genarate, update, is_date } from "../global/format";
 import { jfrefreshgrid, luckysheetrefreshgrid } from "../global/refresh";
+import { ensureBorderInfo, removeContainedBorderInfoInRange } from "../global/borderInfoHelper";
 import { sortSelection } from "../global/sort";
 import luckysheetformula from "../global/formula";
 import { rowLocationByIndex, colLocationByIndex } from "../global/location";
@@ -1144,9 +1145,9 @@ const menuButton = {
             }
 
             let cfg = $.extend(true, {}, Store.config);
-            if (cfg["borderInfo"] == null) {
-                cfg["borderInfo"] = [];
-            }
+            Store.luckysheet_select_save.forEach(function(range) {
+                removeContainedBorderInfoInRange(cfg, range.row, range.column);
+            });
 
             let borderInfo = {
                 rangeType: "range",
@@ -1156,7 +1157,7 @@ const menuButton = {
                 range: $.extend(true, [], Store.luckysheet_select_save),
             };
 
-            cfg["borderInfo"].push(borderInfo);
+            ensureBorderInfo(cfg).push(borderInfo);
 
             if (Store.clearjfundo) {
                 Store.jfundo.length = 0;
@@ -1543,9 +1544,9 @@ const menuButton = {
                     }
 
                     let cfg = $.extend(true, {}, Store.config);
-                    if (cfg["borderInfo"] == null) {
-                        cfg["borderInfo"] = [];
-                    }
+                    Store.luckysheet_select_save.forEach(function(range) {
+                        removeContainedBorderInfoInRange(cfg, range.row, range.column);
+                    });
 
                     let borderInfo = {
                         rangeType: "range",
@@ -1555,7 +1556,7 @@ const menuButton = {
                         range: $.extend(true, [], Store.luckysheet_select_save),
                     };
 
-                    cfg["borderInfo"].push(borderInfo);
+                    ensureBorderInfo(cfg).push(borderInfo);
 
                     if (Store.clearjfundo) {
                         Store.jfundo.length = 0;

@@ -33,6 +33,10 @@ function getBorderInfoComputeRange(dataset_row_st,dataset_row_ed,dataset_col_st,
                     let bd_r1 = borderRange[j].row[0], bd_r2 = borderRange[j].row[1];
                     let bd_c1 = borderRange[j].column[0], bd_c2 = borderRange[j].column[1];
 
+                    if(bd_r2 < dataset_row_st || bd_r1 > dataset_row_ed || bd_c2 < dataset_col_st || bd_c1 > dataset_col_ed){
+                        continue;
+                    }
+
                     if(bd_r1<dataset_row_st){
                         bd_r1 = dataset_row_st;
                     }

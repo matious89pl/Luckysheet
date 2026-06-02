@@ -64,6 +64,11 @@ import editor from "../global/editor";
 import { genarate, update } from "../global/format";
 import method from "../global/method";
 import { getBorderInfoCompute } from "../global/border";
+import {
+    pushCellBorderInfo,
+    pushEmptyCellBorderInfo,
+    removeCellBorderInfoInRange,
+} from "../global/borderInfoHelper";
 import { luckysheetDrawMain } from "../global/draw";
 import locale from "../locale/locale";
 import Store from "../store";
@@ -4547,6 +4552,12 @@ export default function luckysheetHandler() {
                                 bd_r <= last["row"][1] &&
                                 bd_c >= last["column"][0] &&
                                 bd_c <= last["column"][1]
+                            ) &&
+                            !(
+                                bd_r >= row_s &&
+                                bd_r <= row_e &&
+                                bd_c >= col_s &&
+                                bd_c <= col_e
                             )
                         ) {
                             borderInfo.push(cfg["borderInfo"][i]);
@@ -4556,28 +4567,20 @@ export default function luckysheetHandler() {
 
                 cfg["borderInfo"] = borderInfo;
             }
+            removeCellBorderInfoInRange(cfg, [row_s, row_e], [col_s, col_e]);
+
             //替换位置数据更新
             let offsetMC = {};
             for (let r = 0; r < data.length; r++) {
                 for (let c = 0; c < data[0].length; c++) {
-                    if (borderInfoCompute[r + last["row"][0] + "_" + (c + last["column"][0])]) {
-                        let bd_obj = {
-                            rangeType: "cell",
-                            value: {
-                                row_index: r + row_s,
-                                col_index: c + col_s,
-                                l: borderInfoCompute[r + last["row"][0] + "_" + (c + last["column"][0])].l,
-                                r: borderInfoCompute[r + last["row"][0] + "_" + (c + last["column"][0])].r,
-                                t: borderInfoCompute[r + last["row"][0] + "_" + (c + last["column"][0])].t,
-                                b: borderInfoCompute[r + last["row"][0] + "_" + (c + last["column"][0])].b,
-                            },
-                        };
+                    let sourceBorderKey = r + last["row"][0] + "_" + (c + last["column"][0]);
+                    let targetBorderKey = r + row_s + "_" + (c + col_s);
 
-                        if (cfg["borderInfo"] == null) {
-                            cfg["borderInfo"] = [];
-                        }
-
-                        cfg["borderInfo"].push(bd_obj);
+                    if (borderInfoCompute[sourceBorderKey]) {
+                        pushCellBorderInfo(cfg, r + row_s, c + col_s, borderInfoCompute[sourceBorderKey]);
+                    }
+                    else if (borderInfoCompute[targetBorderKey]) {
+                        pushEmptyCellBorderInfo(cfg, r + row_s, c + col_s);
                     }
 
                     let value = "";

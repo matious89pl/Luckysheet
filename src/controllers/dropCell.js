@@ -1,6 +1,11 @@
 import { rowLocationByIndex, colLocationByIndex } from '../global/location';
 import { countfunc } from '../global/count';
 import { getBorderInfoCompute } from '../global/border';
+import {
+    pushCellBorderInfo,
+    pushEmptyCellBorderInfo,
+    removeCellBorderInfoInRange,
+} from '../global/borderInfoHelper';
 import { isRealNum } from '../global/validate';
 import { genarate, update } from '../global/format';
 import { jfrefreshgrid } from '../global/refresh';
@@ -14,6 +19,7 @@ import { getObjType, replaceHtml } from '../utils/util';
 import Store from '../store';
 import locale from '../locale/locale';
 import dayjs from 'dayjs'
+import { setDataVerificationFromSource } from './dataVerificationHelper';
 
 //选区下拉
 const luckysheetDropCell = {
@@ -469,6 +475,7 @@ const luckysheetDropCell = {
         let applyRange = _this.applyRange;
         let apply_str_r = applyRange["row"][0], apply_end_r = applyRange["row"][1];
         let apply_str_c = applyRange["column"][0], apply_end_c = applyRange["column"][1];
+        removeCellBorderInfoInRange(cfg, [apply_str_r, apply_end_r], [apply_str_c, apply_end_c]);
 
         if(direction == "down" || direction == "up"){
             let asLen = apply_end_r - apply_str_r + 1;
@@ -538,40 +545,14 @@ const luckysheetDropCell = {
                         let bd_c = i;
 
                         if(borderInfoCompute[bd_r + "_" + bd_c]){
-                            let bd_obj = {
-                                "rangeType": "cell",
-                                "value": {
-                                    "row_index": j,
-                                    "col_index": i,
-                                    "l": borderInfoCompute[bd_r + "_" + bd_c].l,
-                                    "r": borderInfoCompute[bd_r + "_" + bd_c].r,
-                                    "t": borderInfoCompute[bd_r + "_" + bd_c].t,
-                                    "b": borderInfoCompute[bd_r + "_" + bd_c].b
-                                }
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushCellBorderInfo(cfg, j, i, borderInfoCompute[bd_r + "_" + bd_c]);
                         }
                         else if(borderInfoCompute[j + "_" + i]){
-                            let bd_obj = {
-                                "rangeType": "cell",
-                                "value": {
-                                    "row_index": j,
-                                    "col_index": i,
-                                    "l": null,
-                                    "r": null,
-                                    "t": null,
-                                    "b": null
-                                }
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushEmptyCellBorderInfo(cfg, j, i);
                         }
 
                         //数据验证
-                        if(dataVerification[bd_r + "_" + bd_c]){
-                            dataVerification[j + "_" + i] = dataVerification[bd_r + "_" + bd_c];
-                        }
+                        setDataVerificationFromSource(dataVerification, j + "_" + i, dataVerification[bd_r + "_" + bd_c]);
                     }
                 }
                 if(direction == "up"){
@@ -627,40 +608,14 @@ const luckysheetDropCell = {
                         let bd_c = i;
 
                         if(borderInfoCompute[bd_r + "_" + bd_c]){
-                            let bd_obj = {
-                                "rangeType": "cell",
-                                "value": {
-                                    "row_index": j,
-                                    "col_index": i,
-                                    "l": borderInfoCompute[bd_r + "_" + bd_c].l,
-                                    "r": borderInfoCompute[bd_r + "_" + bd_c].r,
-                                    "t": borderInfoCompute[bd_r + "_" + bd_c].t,
-                                    "b": borderInfoCompute[bd_r + "_" + bd_c].b
-                                }
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushCellBorderInfo(cfg, j, i, borderInfoCompute[bd_r + "_" + bd_c]);
                         }
                         else if(borderInfoCompute[j + "_" + i]){
-                            let bd_obj = {
-                                "rangeType": "cell",
-                                "value": {
-                                    "row_index": j,
-                                    "col_index": i,
-                                    "l": null,
-                                    "r": null,
-                                    "t": null,
-                                    "b": null
-                                }
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushEmptyCellBorderInfo(cfg, j, i);
                         }
 
                         //数据验证
-                        if(dataVerification[bd_r + "_" + bd_c]){
-                            dataVerification[j + "_" + i] = dataVerification[bd_r + "_" + bd_c];
-                        }
+                        setDataVerificationFromSource(dataVerification, j + "_" + i, dataVerification[bd_r + "_" + bd_c]);
                     }
                 }
             }
@@ -726,40 +681,14 @@ const luckysheetDropCell = {
                         let bd_c = copy_str_c + (j - apply_str_c) % csLen;
 
                         if(borderInfoCompute[bd_r + "_" + bd_c]){
-                            let bd_obj = {
-                                "rangeType": "cell",
-                                "value": {
-                                    "row_index": i,
-                                    "col_index": j,
-                                    "l": borderInfoCompute[bd_r + "_" + bd_c].l,
-                                    "r": borderInfoCompute[bd_r + "_" + bd_c].r,
-                                    "t": borderInfoCompute[bd_r + "_" + bd_c].t,
-                                    "b": borderInfoCompute[bd_r + "_" + bd_c].b
-                                }
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushCellBorderInfo(cfg, i, j, borderInfoCompute[bd_r + "_" + bd_c]);
                         }
                         else if(borderInfoCompute[i + "_" + j]){
-                            let bd_obj = {
-                                "rangeType": "cell",
-                                "value": {
-                                    "row_index": i,
-                                    "col_index": j,
-                                    "l": null,
-                                    "r": null,
-                                    "t": null,
-                                    "b": null
-                                }
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushEmptyCellBorderInfo(cfg, i, j);
                         }
 
                         //数据验证
-                        if(dataVerification[bd_r + "_" + bd_c]){
-                            dataVerification[i + "_" + j] = dataVerification[bd_r + "_" + bd_c];
-                        }
+                        setDataVerificationFromSource(dataVerification, i + "_" + j, dataVerification[bd_r + "_" + bd_c]);
                     }
                 }
                 if(direction == "left"){
@@ -815,40 +744,14 @@ const luckysheetDropCell = {
                         let bd_c = copy_end_c - (apply_end_c - j) % csLen;
 
                         if(borderInfoCompute[bd_r + "_" + bd_c]){
-                            let bd_obj = {
-                                "rangeType": "cell",
-                                "value": {
-                                    "row_index": i,
-                                    "col_index": j,
-                                    "l": borderInfoCompute[bd_r + "_" + bd_c].l,
-                                    "r": borderInfoCompute[bd_r + "_" + bd_c].r,
-                                    "t": borderInfoCompute[bd_r + "_" + bd_c].t,
-                                    "b": borderInfoCompute[bd_r + "_" + bd_c].b
-                                }
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushCellBorderInfo(cfg, i, j, borderInfoCompute[bd_r + "_" + bd_c]);
                         }
                         else if(borderInfoCompute[i + "_" + j]){
-                            let bd_obj = {
-                                "rangeType": "cell",
-                                "value": {
-                                    "row_index": i,
-                                    "col_index": j,
-                                    "l": null,
-                                    "r": null,
-                                    "t": null,
-                                    "b": null
-                                }
-                            }
-
-                            cfg["borderInfo"].push(bd_obj);
+                            pushEmptyCellBorderInfo(cfg, i, j);
                         }
 
                         //数据验证
-                        if(dataVerification[bd_r + "_" + bd_c]){
-                            dataVerification[i + "_" + j] = dataVerification[bd_r + "_" + bd_c];
-                        }
+                        setDataVerificationFromSource(dataVerification, i + "_" + j, dataVerification[bd_r + "_" + bd_c]);
                     }
                 }
             }

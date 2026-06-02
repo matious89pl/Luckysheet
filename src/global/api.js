@@ -20,6 +20,11 @@ import { luckysheetDeleteCell, luckysheetextendtable, luckysheetdeletetable } fr
 import { isRealNull, valueIsError, isRealNum, isEditMode, hasPartMC } from "./validate";
 import { isdatetime, diff } from "./datecontroll";
 import { getBorderInfoCompute } from './border';
+import {
+    createRangeBorderInfo,
+    ensureBorderInfo,
+    removeContainedBorderInfoInRange,
+} from './borderInfoHelper';
 import { luckysheetDrawMain } from './draw';
 import pivotTable from '../controllers/pivotTable';
 import server from "../controllers/server";
@@ -398,23 +403,8 @@ export function setCellFormat(row, column, attr, value, options = {}) {
     }
 
     if (attr == 'bd') {
-        if(cfg["borderInfo"] == null){
-            cfg["borderInfo"] = [];
-        }
-
-        let borderInfo = {
-            rangeType: "range",
-            borderType: "border-all",
-            color: "#000",
-            style: "1",
-            range: [{
-                column: [column, column],
-                row: [row, row]
-            }],
-            ...value,
-        }
-
-        cfg["borderInfo"].push(borderInfo);
+        removeContainedBorderInfoInRange(cfg, [row, row], [column, column]);
+        ensureBorderInfo(cfg).push(createRangeBorderInfo([row, row], [column, column], value));
     } else {
         cellData[attr] = value;
     }
@@ -2100,7 +2090,7 @@ export function getRangeHtml(options = {}) {
                                     }
 
                                     if(bd_c == c && borderInfoCompute[bd_r + "_" + bd_c] && borderInfoCompute[bd_r + "_" + bd_c].l){
-                                        let linetype = borderInfoCompute[r + "_" + c].l.style;
+                                        let linetype = borderInfoCompute[bd_r + "_" + bd_c].l.style;
                                         let bcolor = borderInfoCompute[bd_r + "_" + bd_c].l.color;
 
                                         if(bl_obj["style"][linetype] == null){
@@ -2937,10 +2927,29 @@ export function setSingleRangeFormat(attr, value, options = {}) {
         return 'error';
     }
 
+    if(attr == 'bd'){
+        let file = Store.luckysheetfile[order];
+
+        if(file == null){
+            tooltip.info("The order parameter is invalid.", "");
+            return 'error';
+        }
+
+        let cfg = $.extend(true, {}, file.config);
+        removeContainedBorderInfoInRange(cfg, range.row, range.column);
+        ensureBorderInfo(cfg).push(createRangeBorderInfo(range.row, range.column, value));
+
+        file.config = cfg;
+
+        if(file.index == Store.currentSheetIndex){
+            Store.config = cfg;
+        }
+
+        return;
+    }
+
     for (let r = range.row[0]; r <= range.row[1]; r++) {
         for (let c = range.column[0]; c <= range.column[1]; c++) {
-            console.log('r',r);
-            console.log('c',c);
             setCellValue(r, c, {[attr]: value}, {
                 order: order,
                 isRefresh: false,

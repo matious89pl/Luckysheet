@@ -8,9 +8,14 @@ import luckysheetFreezen from "../controllers/freezen";
 import { selectHightlightShow } from "../controllers/select";
 import { luckysheet_searcharray } from "../controllers/sheetSearch";
 import { checkProtectionAuthorityNormal, checkProtectionNotEnable } from "../controllers/protection";
+import { cloneDataVerificationItem } from "../controllers/dataVerificationHelper";
 import { getSheetIndex } from "../methods/get";
 import Store from "../store";
 import method from "./method";
+
+function setClonedDataVerification(dataVerification, key, item) {
+    dataVerification[key] = cloneDataVerificationItem(item);
+}
 
 /**
  * 增加行列
@@ -453,43 +458,43 @@ function luckysheetextendtable(type, index, value, direction, sheetIndex) {
 
             if (type == "row") {
                 if (index < r) {
-                    newDataVerification[r + value + "_" + c] = item;
+                    setClonedDataVerification(newDataVerification, r + value + "_" + c, item);
                 } else if (index == r) {
                     if (direction == "lefttop") {
-                        newDataVerification[r + value + "_" + c] = item;
+                        setClonedDataVerification(newDataVerification, r + value + "_" + c, item);
 
                         for (let i = 0; i < value; i++) {
-                            newDataVerification[r + i + "_" + c] = item;
+                            setClonedDataVerification(newDataVerification, r + i + "_" + c, item);
                         }
                     } else {
-                        newDataVerification[r + "_" + c] = item;
+                        setClonedDataVerification(newDataVerification, r + "_" + c, item);
 
                         for (let i = 0; i < value; i++) {
-                            newDataVerification[r + i + 1 + "_" + c] = item;
+                            setClonedDataVerification(newDataVerification, r + i + 1 + "_" + c, item);
                         }
                     }
                 } else {
-                    newDataVerification[r + "_" + c] = item;
+                    setClonedDataVerification(newDataVerification, r + "_" + c, item);
                 }
             } else if (type == "column") {
                 if (index < c) {
-                    newDataVerification[r + "_" + (c + value)] = item;
+                    setClonedDataVerification(newDataVerification, r + "_" + (c + value), item);
                 } else if (index == c) {
                     if (direction == "lefttop") {
-                        newDataVerification[r + "_" + (c + value)] = item;
+                        setClonedDataVerification(newDataVerification, r + "_" + (c + value), item);
 
                         for (let i = 0; i < value; i++) {
-                            newDataVerification[r + "_" + (c + i)] = item;
+                            setClonedDataVerification(newDataVerification, r + "_" + (c + i), item);
                         }
                     } else {
-                        newDataVerification[r + "_" + c] = item;
+                        setClonedDataVerification(newDataVerification, r + "_" + c, item);
 
                         for (let i = 0; i < value; i++) {
-                            newDataVerification[r + "_" + (c + i + 1)] = item;
+                            setClonedDataVerification(newDataVerification, r + "_" + (c + i + 1), item);
                         }
                     }
                 } else {
-                    newDataVerification[r + "_" + c] = item;
+                    setClonedDataVerification(newDataVerification, r + "_" + c, item);
                 }
             }
         }
@@ -1440,15 +1445,15 @@ function luckysheetdeletetable(type, st, ed, sheetIndex) {
 
             if (type == "row") {
                 if (r < st) {
-                    newDataVerification[r + "_" + c] = item;
+                    setClonedDataVerification(newDataVerification, r + "_" + c, item);
                 } else if (r > ed) {
-                    newDataVerification[r - slen + "_" + c] = item;
+                    setClonedDataVerification(newDataVerification, r - slen + "_" + c, item);
                 }
             } else if (type == "column") {
                 if (c < st) {
-                    newDataVerification[r + "_" + c] = item;
+                    setClonedDataVerification(newDataVerification, r + "_" + c, item);
                 } else if (c > ed) {
-                    newDataVerification[r + "_" + (c - slen)] = item;
+                    setClonedDataVerification(newDataVerification, r + "_" + (c - slen), item);
                 }
             }
         }
@@ -2093,15 +2098,15 @@ function luckysheetDeleteCell(type, str, edr, stc, edc, sheetIndex) {
             if (r < str || r > edr || c < stc || c > edc) {
                 if (type == "moveLeft") {
                     if (c > edc && r >= str && r <= edr) {
-                        newDataVerification[r + "_" + (c - clen)] = item;
+                        setClonedDataVerification(newDataVerification, r + "_" + (c - clen), item);
                     } else {
-                        newDataVerification[r + "_" + c] = item;
+                        setClonedDataVerification(newDataVerification, r + "_" + c, item);
                     }
                 } else if (type == "moveUp") {
                     if (r > edr && c >= stc && c <= edc) {
-                        newDataVerification[r - rlen + "_" + c] = item;
+                        setClonedDataVerification(newDataVerification, r - rlen + "_" + c, item);
                     } else {
-                        newDataVerification[r + "_" + c] = item;
+                        setClonedDataVerification(newDataVerification, r + "_" + c, item);
                     }
                 }
             }
