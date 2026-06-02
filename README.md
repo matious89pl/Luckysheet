@@ -4,8 +4,6 @@
 
 </div>
 
-English | [简体中文](./README-zh.md)
-
 # Maintained Luckysheet fork
 
 This repository is a maintained fork of Luckysheet for teams that still depend on the original project and need fixes in the existing codebase. The focus here is practical maintenance: patch production bugs, keep the public API stable, and preserve the current integration model.
