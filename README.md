@@ -11,9 +11,24 @@
 
 English| [简体中文](./README-zh.md)
 
-# Luckysheet is no longer maintained. It is recommended to use the upgraded version of [Univer](https://univer.short.gy/LuckysheetRepository) for production environment deployment. The new version solves problems such as large data loading, chart styles, pivot tables, formula calculations, etc., and has made many optimization designs, added import, export, printing, collaboration and other functions, improved table performance, and has a professional technical team to provide technical support.
+# Luckysheet fork with targeted maintenance fixes
 
-Follow the [#1454](https://github.com/dream-num/Luckysheet/issues/1454) issue for more details.
+This repository is a maintained fork of Luckysheet focused on fixing production issues in the upstream codebase while preserving the original API and integration model.
+
+## Fork status
+
+- Maintained in this fork for teams still running Luckysheet.
+- Keeps the upstream Luckysheet architecture and public surface.
+- Documents fork-specific fixes directly in this README.
+
+## Fixed in this fork
+
+- `borderInfo` growth during copy, fill, drag-move, and repeated border application.
+- Broken `bd` range-format API behavior that wrote borders into cell data instead of `config.borderInfo`.
+- Stale dropdown and data-validation metadata left behind after paste, fill-handle operations, and structural row/column moves.
+- Dropdown validation bugs affecting checkbox validation, trimmed literal lists, and multi-select values sourced from ranges.
+- Dropdown selection writes targeting the wrong cell when focus changed while the menu was open.
+- Border export/copy edge cases around merged-cell left border handling.
 
 ## Introduction
 🚀Luckysheet is an online spreadsheet like excel that is powerful, simple to configure, and completely open source.
@@ -26,10 +41,6 @@ Follow the [#1454](https://github.com/dream-num/Luckysheet/issues/1454) issue fo
  | [Gitee Mirror](https://gitee.com/mengshukeji/Luckysheet)| [Gitee Online Documentation](https://mengshukeji.gitee.io/LuckysheetDocs/) | [Gitee Online Demo](https://mengshukeji.gitee.io/luckysheetdemo/) | [Google Group](https://groups.google.com/g/luckysheet) |
 
 ![Demo](/docs/.vuepress/public/img/LuckysheetDemo.gif)
-
-## Plugins
-
-For advanced features like import, export, and printing, please use [Univer](https://github.com/dream-num/univer/)
 
 ## Ecosystem
 

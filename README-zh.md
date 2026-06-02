@@ -6,9 +6,24 @@
 
 简体中文 | [English](./README.md)
 
-# Luckysheet 已不再维护，推荐使用升级版 [Univer](https://univer.short.gy/LuckysheetRepository) 用于生产环境部署，新版解决了大数据量加载，图表样式，透视表，公式计算等方面的问题，做了很多优化设计，增加了导入，导出，打印，协同等功能，提高了表格性能，更有专业技术团队进行技术支持。
+# 带有问题修复的 Luckysheet 维护分支
 
-点击 [#1454](https://github.com/dream-num/Luckysheet/issues/1454) 查看更多详情。
+这个仓库是 Luckysheet 的维护型 fork，目标是在保留原有 API 和集成方式的前提下，持续修复上游代码中的实际问题，方便仍在使用 Luckysheet 的项目继续维护。
+
+## Fork 状态
+
+- 这个 fork 继续维护 Luckysheet 的可用性。
+- 保留上游 Luckysheet 的整体架构和公开接口。
+- 在 README 中直接记录这个 fork 已修复的问题。
+
+## 这个 fork 已修复的问题
+
+- 复制、下拉填充、拖拽移动和重复设置边框时 `borderInfo` 持续膨胀的问题。
+- `bd` 范围格式 API 把边框写入单元格数据而不是 `config.borderInfo` 的问题。
+- 粘贴、填充句柄操作、行列结构移动后遗留旧下拉框和数据验证配置的问题。
+- 复选框验证、带空格的字面量下拉列表、范围来源多选值等下拉校验错误。
+- 下拉菜单打开后焦点变化时，选项写入到错误单元格的问题。
+- 合并单元格边框在复制/导出场景下的左边框处理错误。
 
 
 ## 介绍
@@ -22,10 +37,6 @@
  | [Gitee镜像](https://gitee.com/mengshukeji/Luckysheet)| [Gitee在线文档](https://mengshukeji.gitee.io/LuckysheetDocs/zh/) | [Gitee在线Demo](https://mengshukeji.gitee.io/luckysheetdemo/) | [Google Group](https://groups.google.com/g/luckysheet) |
 
 ![演示](/docs/.vuepress/public/img/LuckysheetDemo.gif)
-
-## 插件
-
-导入导出、打印等高级功能请使用 [Univer](https://github.com/dream-num/univer/)
 
 ## 生态
 
@@ -136,11 +147,6 @@ npm run build
 
 - [官网](http://lucky.lashuju.com/index.html)
 - [Github 论坛](https://github.com/mengshukeji/Luckysheet/discussions)
-- 以下扫码加入官方微信群或者QQ群
-
-加小编微信: msuniver，备注:加群
-
-<img src="https://gcore.jsdelivr.net/gh/mengshukeji/LuckyResources@master/assets/img/wechat/univer-wechat.jpg" width="200" />
 
 
 [英文社群](./README.md)
